@@ -1,74 +1,91 @@
 <template>
   <div>
     <h1>ToDo App</h1>
-    <form>
+    <form @submit.prevent="addTodo">
       <label>New ToDo List</label>
       <input 
         type="text" 
         name="newTodo" 
         placeholder="I will do..."
         autocomplete="off" 
+        v-model.trim="newTodo"
       />
       <button class="button-add">Add ToDo</button>
     </form>
     <h2>ToDo List</h2>
     <ul>
-      <li>
-        <input 
-          type="checkbox" 
-          class="input-checkbox"
-        />
-        <input 
-          type="text" 
-          class="input-list" 
-          value="Lorem ipsum, dolor sit amet" 
-          autocomplete="off"
-        />
-        <button 
-          class="button-remove"
-        >&#10006;</button>
-      </li>
-      <li>
-        <input 
-          type="checkbox" 
-          class="input-checkbox"
-        />
-        <input 
-          type="text" 
-          class="input-list" 
-          value="Lorem ipsum, dolor sit amet" 
-          autocomplete="off"
-        />
-        <button 
-          class="button-remove"
-        >&#10006;</button>
-      </li>
-      <li>
-        <input 
-          type="checkbox" 
-          class="input-checkbox"
-        />
-        <input 
-          type="text" 
-          class="input-list" 
-          value="Lorem ipsum, dolor sit amet" 
-          autocomplete="off"
-        />
-        <button 
-          class="button-remove"
-        >&#10006;</button>
-      </li>
+      <ListItem
+        v-for="(todo, index) in todos" 
+        :key="index"
+        :index="index"
+        :todo="todo"
+        @doneTodo="doneTodo"
+        @saveNewInput="saveNewInput"
+        @removeTodo="removeTodo"
+      />
     </ul>
+    <h3 v-if="todos.length === 0" class="no-item-text">Empty list</h3>
   </div>
 </template>
 
 <script>
-// import { ref } from 'vue';
+import { ref } from 'vue';
+import ListItem from './components/ListItem.vue';
 
 export default {
   name: "App",
+  components: {
+    ListItem
+  },
   setup() {
-    // const newTodo = ref('');
+    const newTodo = ref('');
+    const defaultData = [{
+      done: false,
+      content: 'Do math'
+    }];
+
+    const todoData = JSON.parse(localStorage.getItem('todos')) || defaultData;
+    const todos = ref(todoData);
+
+    function addTodo() {
+      if (newTodo.value) {
+        todos.value.push({
+          done: false,
+          content: newTodo.value
+        });
+        newTodo.value = '';
+        saveData();
+      }
+    };
+
+    function removeTodo(index) {
+      todos.value.splice(index, 1);
+      saveData();
+    };
+
+    function doneTodo(index) {
+      todos.value[index].done = !todos.value[index].done;
+      saveData();
+    }
+
+    function saveData() {
+      const storageData = JSON.stringify(todos.value);
+      localStorage.setItem('todos', storageData);
+    }
+
+    function saveNewInput(newText, index) {
+      todos.value[index].content = newText;
+      saveData();
+    }
+
+    return {
+      newTodo,
+      todos,
+      addTodo,
+      removeTodo,
+      doneTodo,
+      saveNewInput
+    };
   },
 };
 </script>
@@ -155,5 +172,15 @@ li {
 .button-add {
   height: 35px;
   font-size: 20px;
+}
+
+.done {
+  text-decoration: line-through;
+}
+
+.no-item-text {
+  width: 540px;
+  color: white;
+  text-align: center;
 }
 </style>
